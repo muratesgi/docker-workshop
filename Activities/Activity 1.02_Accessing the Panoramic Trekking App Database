@@ -1,0 +1,37 @@
+This activity will involve accessing the database running inside the container
+instance using the PSQL CLI utility. Once you have logged in using the credentials
+(panoramic/trekking), you will query for the list of databases running in
+the container.
+
+Perform the following steps:
+1. Log in to the Postgres database container using the PSQL command-line utility.
+2. Once logged in to the database, return a list of databases in Postgres by default.
+
+Note
+If you are not familiar with the PSQL CLI, the following is a list of reference
+commands to assist you with this activity:
+Logging in: psql --username username --password
+Listing the database: \l
+Quitting the PSQL shell: \q
+
+
+Solution:
+1. Log in to the database instance using docker exec to start the PSQL
+shell inside the container, passing in the --username flag and leaving the
+--password flag empty:
+
+$ docker exec -it <containerID> psql --username panoramic --password
+
+This should prompt you for the password and start a PSQL shell.
+2. Use the \l command to list all the databases:
+psql (12.2 (Debian 12.2-2.pgdg100+1))
+Type "help" for help.
+panoramic=# \l
+3. Finally, use the \q shortcut to exit from the shell.
+4. Use the docker stop and docker rm commands to stop and clean up the
+container instance.
+In this activity, you accessed the database running in the container by logging in
+using the credentials that were set up in Activity 1.01, Pulling and Running the
+PostgreSQL Container Image from Docker Hub. You also listed the databases running
+in the container. The activity gave you hands-on experience of how to access the
+database running in any container using a PSQL shell.

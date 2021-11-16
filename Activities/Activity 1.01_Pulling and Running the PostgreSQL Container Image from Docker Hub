@@ -1,0 +1,49 @@
+In this activity, you are asked to start a PostgreSQL version 12 database container
+with default credentials.
+
+>>>Note
+The official Postgres container image provides many environment
+variable overrides you can leverage to configure the PostgreSQL
+instance. Review the documentation for the container on Docker
+Hub at https://hub.docker.com/_/postgres.
+
+Perform the following steps:
+1. Create a Postgres database container instance that will serve as the data tier of
+our application stack.
+2. Use environment variables to configure the container at runtime to use the
+   following database credentials:   
+username: panoramic
+password: trekking
+3. Verify whether the container is running and healthy.
+
+Expected Output:
+The following output should be returned on running docker ps command:
+CONTAINER ID IMAGE COMMAND CREATED
+STATUS PORTS NAMES
+29f115af8cdd postgres:12 "docker-entrypoint.s…" 4 seconds ago
+Up 2 seconds 5432/tcp blissful_kapitsa
+
+Solution:
+1. To start the Postgres Docker container, first determine what environment
+variables are required to set the default username and password credentials
+for the database. Reading through the official Docker Hub page, you can see
+that you have configuration options for the POSTGRES_USER and POSTGRES_
+PASSWORD environment variables. Pass the environment variables using the -e
+flag. The final command to start our Postgres Docker container will be as follows:
+
+$ docker run -itd -e "POSTGRES_USER=panoramic" -e "POSTGRES_PASSWORD=trekking" postgres:12
+Running this command will start the container.
+
+2. Execute the docker ps command to verify that it is running and healthy:
+
+$ docker ps
+The command should return output like the following:
+CONTAINER ID IMAGE COMMAND CREATED
+STATUS PORTS NAMES
+29f115af8cdd postgres:12 "docker-entrypoint.s…" 4 seconds ago
+Up 2 seconds 5432/tcp blissful_kapitsa
+It can be seen from the preceding output that the container with the ID
+29f115af8cdd is up and running.
+
+In this activity, you have successfully started a PostgreSQL version 12 container that is
+part of the Panoramic Trekking App, which will be built over the course of this book.
