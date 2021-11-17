@@ -744,3 +744,214 @@ $ docker container run user
 As you can see from the following output, www-data is the current user
 associated with the Docker container:
 www-data
+
+>>>The VOLUME Directive
+In Docker, the data (for example, files, executables) generated and used by Docker
+containers will be stored within the container filesystem. When we delete the
+container, all the data will be lost. To overcome this issue, Docker came up with
+the concept of volumes. Volumes are used to persist the data and share the data
+between containers. We can use the VOLUME directive within the Dockerfile
+to create Docker volumes. Once a VOLUME is created in the Docker container, a
+mapping directory will be created in the underlying host machine. All file changes to
+the volume mount of the Docker container will be copied to the mapped directory of
+the host machine.
+The VOLUME directive generally takes a JSON array as the parameter:
+VOLUME ["/path/to/volume"]
+Or, we can specify a plain string with multiple paths:
+VOLUME /path/to/volume1 /path/to/volume2
+We can use the docker container inspect <container> command to view
+the volumes available in a container. The output JSON of the docker container inspect
+command will print the volume information similar to the following:
+"Mounts": [
+{
+"Type": "volume",
+"Name": "77db32d66407a554bd0dbdf3950671b658b6233c509ea
+ed9f5c2a589fea268fe",
+"Source": "/var/lib/docker/volumes/77db32d66407a554bd0
+dbdf3950671b658b6233c509eaed9f5c2a589fea268fe/_data",
+"Destination": "/path/to/volume",
+"Driver": "local",
+"Mode": "",
+"RW": true,
+"Propagation": ""
+}
+],
+As per the preceding output, there is a unique name given to the volume by Docker.
+Also, the source and destination paths of the volume are mentioned in the output.
+
+Additionally, we can execute the docker volume inspect <volume> command
+to display detailed information pertaining to a volume:
+[
+{
+"CreatedAt": "2019-12-28T12:52:52+05:30",
+"Driver": "local",
+"Labels": null,
+"Mountpoint": "/var/lib/docker/volumes/77db32d66407a554
+bd0dbdf3950671b658b6233c509eaed9f5c2a589fea268fe/_data",
+"Name": "77db32d66407a554bd0dbdf3950671b658b6233c509eae
+d9f5c2a589fea268fe",
+"Options": null,
+"Scope": "local"
+}
+]
+This is also similar to the previous output, with the same unique name and the mount
+path of the volume.
+
+Exercise 2.06: Using VOLUME Directive in the Dockerfile
+In this exercise, you will be setting a Docker container to run the Apache web server.
+However, you do not want to lose the Apache log files in case of a Docker container
+failure. As a solution, you have decided to persist in the log files by mounting the
+Apache log path to the underlying Docker host:
+1. Create a new directory named volume-exercise:
+mkdir volume-exercise
+2. Navigate to the newly created volume-exercise directory:
+cd volume-exercise
+3. Within the volume-exercise directory, create a file named Dockerfile:
+touch Dockerfile
+4. Now, open the Dockerfile using your favorite text editor:
+vim Dockerfile
+5. Add the following content to the Dockerfile, save it, and exit from the
+Dockerfile:
+# VOLUME example
+FROM ubuntu
+RUN apt-get update && apt-get install apache2 -y
+VOLUME ["/var/log/apache2"]
+This Dockerfile started by defining the Ubuntu image as the parent image.
+Next, you will execute the apt-get update command to update the package
+list, and the apt-get install apache2 -y command to install the Apache
+web server. Finally, use the VOLUME directive to set up a mount point to the
+/var/log/apache2 directory.
+6. Now, build the Docker image:
+$ docker image build -t volume .
+7. Execute the docker container run command to start a new container from the
+Docker image that you built in the previous step. Note that you are using the
+--interactive and --tty flags to open an interactive bash session so that
+you can execute commands from the bash shell of the Docker container.
+You have also used the --name flag to define the container name as
+volume-container:
+$ docker container run --interactive --tty --name volume-container
+volume /bin/bash
+Your bash shell will be opened as follows:
+root@bc61d46de960: /#
+8. From the Docker container command line, change directory to the /var/log/
+apache2/ directory:
+# cd /var/log/apache2/
+This will produce the following output:
+root@bc61d46de960: /var/log/apache2#
+9. Now, list the available files in the directory:
+# ls -l
+10. Now, exit the container to check the host filesystem:
+# exit
+11. Inspect volume-container to view the mount information:
+$ docker container inspect volume-container
+12. Inspect the volume with the docker volume inspect <volume_name>
+command. <volume_name> can be identified by the Name field of the
+preceding output:
+$ docker volume inspect
+354d188e0761d82e1e7d9f3d5c6ee644782b7150f51cead8f140556e5d334bd5
+We can see that the container is mounted to the host path of "/var/lib/
+docker/volumes/354d188e0761d82e1e7d9f3d5c6ee644782b
+7150f51cead8f140556e5d334bd5/_data", which is defined as the
+Mountpoint field in the preceding output.
+13. List the files available in the host file path. The host file path can be identified
+with the "Mountpoint" field of the preceding output:
+$ sudo ls -l /var/lib/docker/
+volumes/354d188e0761d82e1e7d9f3d5c6ee644782b7150f51cead8f14
+0556e5d334bd5/_data
+
+
+#The EXPOSE Directive
+The EXPOSE directive is used to inform Docker that the container is listening on the
+specified ports at runtime. We can use the EXPOSE directive to expose ports through
+either TCP or UDP protocols. The EXPOSE directive has the following format:
+EXPOSE <port>
+However, the ports exposed with the EXPOSE directive will only be accessible from
+within the other Docker containers. To expose these ports outside the Docker
+container, we can publish the ports with the -p flag with the docker container
+run command:
+docker container run -p <host_port>:<container_port> <image>
+As an example, imagine that we have two containers. One is a NodeJS web app
+container that should be accessed from outside via port 80. The second one is
+the MySQL container, which should be accessed from the node app container via
+port 3306. In this scenario, we have to expose port 80 of the NodeJS app with the
+EXPOSE directive and use the -p flag with the docker container run command
+to expose it externally. However, for the MySQL container, we can only use the
+EXPOSE directive without the -p flag when running the container, as 3306 should
+only be accessible from the node app container.
+So, in summary, the following statements define this directive:
+• If we specify both the EXPOSE directive and -p flag, exposed ports will be
+accessible from other containers as well as externally.
+• If we specify EXPOSE without the -p flag, exposed ports will only be accessible
+from other containers, but not externally.
+You will learn about the HEALTHCHECK directive in the next section.
+
+#The HEALTHCHECK Directive
+Health checks are used in Docker to check whether the containers are running
+healthily. For example, we can use health checks to make sure the application is
+running within the Docker container. Unless there is a health check specified, there
+is no way for Docker to say whether a container is healthy. This is very important if
+you are running Docker containers in production environments. The HEALTHCHECK
+directive has the following format:
+HEALTHCHECK [OPTIONS] CMD command
+There can be only one HEALTHCHECK directive in a Dockerfile. If there is more
+than one HEALTHCHECK directive, only the last one will take effect.
+As an example, we can use the following directive to ensure that the container can
+receive traffic on the http://localhost/ endpoint:
+HEALTHCHECK CMD curl -f http://localhost/ || exit 1
+The exit code at the end of the preceding command is used to specify the health
+status of the container. 0 and 1 are valid values for this field. 0 is used to denote a
+healthy container, and 1 is used to denote an unhealthy container.
+In addition to the command, we can specify a few other parameters with the
+HEALTHCHECK directive, as follows:
+• --interval: This specifies the period between each health check (the default
+is 30s).
+• --timeout: If no success response is received within this period, the health
+check is considered failed (the default is 30s).
+• --start-period: The duration to wait before running the first health check.
+This is used to give a startup time for the container (the default is 0s).
+• --retries: The container will be considered unhealthy if the health check
+failed consecutively for the given number of retries (the default is 3).
+In the following example, we have overridden the default values by providing our
+custom values with the HEALTHCHECK directive:
+HEALTHCHECK --interval=1m --timeout=2s --start-period=2m --retries=3 \
+CMD curl -f http://localhost/ || exit 1
+We can check the health status of a container with the docker container list
+command. This will list the health status under the STATUS column:
+CONTAINER ID IMAGE COMMAND CREATED
+STATUS PORTS NAMES
+d4e627acf6ec sample "apache2ctl -D FOREG…" About a minute ago
+Up About a minute (healthy) 0.0.0.0:80->80/tcp upbeat_banach
+As soon as we start the container, the health status will be health: starting.
+Following the successful execution of the HEALTHCHECK command, the status
+will change to healthy.
+
+#The ONBUILD Directive
+The ONBUILD directive is used in the Dockerfile to create a reusable Docker
+image that will be used as the base for another Docker image. As an example, we can
+create a Docker image that contains all the prerequisites, such as dependencies and
+configurations, in order to run an application. Then, we can use this 'prerequisite'
+image as the parent image to run the application.
+While creating the prerequisite image, we can use the ONBUILD directive, which will
+include the instructions that should only be executed when this image is used as the
+parent image in another Dockerfile. ONBUILD instructions will not be executed
+while building the Dockerfile that contains the ONBUILD directive, but only when
+building the child image.
+The ONBUILD directive takes the following format:
+ONBUILD <instruction>
+As an example, consider that we have the following ONBUILD instruction in the
+Dockerfile of our custom base image:
+ONBUILD ENTRYPOINT ["echo","Running ONBUILD directive"]
+The "Running ONBUILD directive" value will not be printed if we create a
+Docker container from our custom base image. However, the "Running ONBUILD
+directive" value will be printed if we use our custom base image as the base for
+our new child Docker image.
+We can use the docker image inspect command for the parent image to list
+the OnBuild triggers listed for the image:
+$ docker image inspect <parent-image>
+The command will return output similar to the following:
+...
+"OnBuild": [
+"CMD [\"echo\",\"Running ONBUILD directive\"]"
+]
+
+page:87
