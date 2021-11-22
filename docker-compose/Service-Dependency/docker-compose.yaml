@@ -1,0 +1,14 @@
+version: "3"
+services:
+  init:
+    image: busybox
+  pre:
+    image: busybox
+    depends_on:
+    - "init"
+  main:
+    image: busybox
+    depends_on:
+    - "pre"
+
+#In this file, the main container depends on the pre container, whereas the pre container depends on the init container.
